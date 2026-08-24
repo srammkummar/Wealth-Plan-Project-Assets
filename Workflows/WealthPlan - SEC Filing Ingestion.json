@@ -1,0 +1,424 @@
+{
+  "name": "WealthPlan - SEC Filing Ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ced42781-f261-4db8-a37b-52f0cde44d92",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c965da7f-35b5-4c05-8304-4049bd33e6db",
+              "name": "ticker",
+              "value": "AAPL",
+              "type": "string"
+            },
+            {
+              "id": "71527940-7d5a-44d5-95d1-e98cb33ddd79",
+              "name": "cik",
+              "value": "0000320193",
+              "type": "string"
+            },
+            {
+              "id": "6be9a2c9-724a-41b5-9b0c-19be42789138",
+              "name": "form_type",
+              "value": "10-K",
+              "type": "string"
+            },
+            {
+              "id": "d514a0e5-5dd9-4b65-bf3f-ec426159fab6",
+              "name": "max_filings",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "97f3f7ab-af85-45e1-bf9b-a7e246e470ad",
+              "name": "sec_user_agent",
+              "value": "WealthPlan-RAG personaleduacct@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "0491b679-8d7c-4a6e-8303-2b0224dbf10d",
+      "name": "Company Settings"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://data.sec.gov/submissions/CIK' + $json.cik + '.json' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "={{ $json.sec_user_agent }}"
+            },
+            {
+              "name": " Accept-Encoding",
+              "value": "gzip, deflate"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "0d7953c2-ffe3-4da9-92c0-fd7ad278ed3d",
+      "name": "Get SEC Submissions"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secResponse = $input.first().json;\nconst settings = $('Company Settings').first().json;\n\nconst recent =\n  secResponse.filings &&\n  secResponse.filings.recent;\n\nif (!recent || !Array.isArray(recent.form)) {\n  throw new Error(\n    'The SEC response does not contain filings.recent data.'\n  );\n}\n\nconst requestedForm = String(\n  settings.form_type || '10-K'\n);\n\nconst maxFilings = Number(\n  settings.max_filings || 1\n);\n\nconst cikPadded = String(\n  settings.cik\n).padStart(10, '0');\n\nconst numericCik = parseInt(\n  cikPadded,\n  10\n);\n\nif (!Number.isFinite(numericCik)) {\n  throw new Error(\n    'The company CIK is not valid.'\n  );\n}\n\nconst cikWithoutLeadingZeros =\n  String(numericCik);\n\nconst matchingFilings = [];\n\nfor (\n  let i = 0;\n  i < recent.form.length;\n  i++\n) {\n  if (recent.form[i] !== requestedForm) {\n    continue;\n  }\n\n  const accessionNumber = String(\n    recent.accessionNumber[i] || ''\n  ).trim();\n\n  const primaryDocument = String(\n    recent.primaryDocument[i] || ''\n  ).trim();\n\n  if (\n    accessionNumber === '' ||\n    primaryDocument === ''\n  ) {\n    continue;\n  }\n\n  const accessionWithoutDashes =\n    accessionNumber\n      .split('-')\n      .join('');\n\n  const ticker = String(\n    settings.ticker\n  ).toUpperCase();\n\n  const sourceUrl =\n    'https://www.sec.gov/Archives/edgar/data/' +\n    cikWithoutLeadingZeros +\n    '/' +\n    accessionWithoutDashes +\n    '/' +\n    primaryDocument;\n\n  matchingFilings.push({\n    ticker: ticker,\n    company_name: secResponse.name,\n    cik: cikPadded,\n    form_type: recent.form[i],\n    filing_date: recent.filingDate[i],\n    report_date: recent.reportDate[i],\n    accession_number: accessionNumber,\n    primary_document: primaryDocument,\n    source_url: sourceUrl,\n    document_id:\n      ticker +\n      '_' +\n      recent.form[i] +\n      '_' +\n      accessionWithoutDashes\n  });\n}\n\nmatchingFilings.sort(\n  (first, second) =>\n    Date.parse(second.filing_date) -\n    Date.parse(first.filing_date)\n);\n\nif (matchingFilings.length === 0) {\n  throw new Error(\n    'No ' +\n    requestedForm +\n    ' filing was found for ' +\n    settings.ticker +\n    '.'\n  );\n}\n\nreturn matchingFilings\n  .slice(0, maxFilings)\n  .map((filing) => {\n    return {\n      json: filing\n    };\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "039ef58e-0d7b-41a6-9000-c2158e839c46",
+      "name": "Select Latest 10-K"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.source_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "={{ $('Company Settings').first().json.sec_user_agent }}"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "html"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "82da5774-8c7a-46e6-a5c1-72610c8f23d3",
+      "name": "Download 10-K Filing"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "filing_text",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "ab3b4e65-ad40-42b7-b144-3314bd0ed4bb",
+      "name": "Extract Filing Text"
+    },
+    {
+      "parameters": {
+        "jsCode": "const extracted = $input.first().json;\nconst filing = $('Select Latest 10-K').first().json;\n\nlet text = String(\n  extracted.filing_text || ''\n);\n\n// Replace non-breaking spaces and remove carriage returns.\ntext = text\n  .split('\\u00A0')\n  .join(' ')\n  .split('\\r')\n  .join('');\n\nconst cleanedLines = [];\nlet previousLineWasBlank = false;\n\nfor (const rawLine of text.split('\\n')) {\n  const cleanedLine = rawLine\n    .split('\\t')\n    .join(' ')\n    .split(' ')\n    .filter((part) => part !== '')\n    .join(' ')\n    .trim();\n\n  if (cleanedLine === '') {\n    if (!previousLineWasBlank) {\n      cleanedLines.push('');\n    }\n\n    previousLineWasBlank = true;\n  } else {\n    cleanedLines.push(cleanedLine);\n    previousLineWasBlank = false;\n  }\n}\n\ntext = cleanedLines\n  .join('\\n')\n  .trim();\n\nif (text.length < 10000) {\n  throw new Error(\n    'The extracted filing text is unexpectedly short: ' +\n    text.length +\n    ' characters.'\n  );\n}\n\nreturn [\n  {\n    json: {\n      ...filing,\n      text: text,\n      character_count: text.length,\n      section: 'full-filing-baseline'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "f30f0c51-471f-4910-953c-00178bccd0f3",
+      "name": "Clean Filing Text"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "wealthplan-sec-filings",
+          "mode": "list",
+          "cachedResultName": "wealthplan-sec-filings"
+        },
+        "options": {
+          "pineconeNamespace": "sec-filings"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "339a4647-91ae-47a9-ab24-d7fa54f9f827",
+      "name": "Insert Filing into Pinecone",
+      "credentials": {
+        "pineconeApi": {
+          "id": "JyInC2HlbjeB9PIH",
+          "name": "WealthPlan-Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        208
+      ],
+      "id": "43629e17-3186-4a2a-93cb-3ffd22f2a1dc",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "OljIO4Q19eBxavjN",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "ticker",
+                "value": "={{ $json.ticker }}"
+              },
+              {
+                "name": "company_name",
+                "value": "={{ $json.company_name }}"
+              },
+              {
+                "name": "cik",
+                "value": "={{ $json.cik }}"
+              },
+              {
+                "name": "form_type",
+                "value": "={{ $json.form_type }}"
+              },
+              {
+                "name": "filing_date",
+                "value": "={{ $json.filing_date }}"
+              },
+              {
+                "name": "report_date",
+                "value": "={{ $json.report_date }}"
+              },
+              {
+                "name": "accession_number",
+                "value": "={{ $json.accession_number }}"
+              },
+              {
+                "name": "source_url",
+                "value": "={{ $json.source_url }}"
+              },
+              {
+                "name": "document_id",
+                "value": "={{ $json.document_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        192
+      ],
+      "id": "b235f28f-3603-486f-88fa-9a7e4afc025b",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        416
+      ],
+      "id": "7073c03f-09e1-436e-bd0b-a964fc3cc6b2",
+      "name": "Recursive Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Company Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Settings": {
+      "main": [
+        [
+          {
+            "node": "Get SEC Submissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SEC Submissions": {
+      "main": [
+        [
+          {
+            "node": "Select Latest 10-K",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Latest 10-K": {
+      "main": [
+        [
+          {
+            "node": "Download 10-K Filing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download 10-K Filing": {
+      "main": [
+        [
+          {
+            "node": "Extract Filing Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Filing Text": {
+      "main": [
+        [
+          {
+            "node": "Clean Filing Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Filing Text": {
+      "main": [
+        [
+          {
+            "node": "Insert Filing into Pinecone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Filing into Pinecone",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Filing into Pinecone",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "afdcbc5d-6dc6-4261-bbdd-2654dbd5d0a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "Bn27twnVmDQRzmIK",
+  "tags": []
+}

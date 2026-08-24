@@ -1,0 +1,250 @@
+{
+  "name": "WealthPlan - Database Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        288,
+        112
+      ],
+      "id": "f99eaffe-605b-43fa-bf5e-75ac4baced66",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "JyInC2HlbjeB9PIH",
+          "name": "WealthPlan-Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        592,
+        0
+      ],
+      "id": "cd46f233-04bb-43a2-875d-846119331f80",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "7q4GSpiQxqyQBlHK",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "40bde186-acb1-4aa8-b5ec-5cc1d274373c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS users (\n    user_id TEXT PRIMARY KEY,\n    display_name TEXT NOT NULL,\n    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        800,
+        -80
+      ],
+      "id": "29f8fa3a-e8d4-4acb-86d3-4c680e8dd0b9",
+      "name": "Create Users Table",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS user_financial_profiles (\n    user_id TEXT PRIMARY KEY\n        REFERENCES users(user_id)\n        ON DELETE CASCADE,\n\n    current_age INTEGER\n        CHECK (\n            current_age IS NULL\n            OR current_age BETWEEN 18 AND 120\n        ),\n\n    current_portfolio_value NUMERIC(20,2)\n        NOT NULL DEFAULT 0\n        CHECK (current_portfolio_value >= 0),\n\n    monthly_investment NUMERIC(20,2)\n        NOT NULL DEFAULT 0\n        CHECK (monthly_investment >= 0),\n\n    risk_tolerance TEXT\n        CHECK (\n            risk_tolerance IN (\n                'conservative',\n                'moderate',\n                'aggressive'\n            )\n        ),\n\n    preferred_sectors TEXT[]\n        NOT NULL DEFAULT ARRAY[]::TEXT[],\n\n    excluded_sectors TEXT[]\n        NOT NULL DEFAULT ARRAY[]::TEXT[],\n\n    inflation_rate NUMERIC(10,6)\n        NOT NULL DEFAULT 0.025,\n\n    pre_retirement_return NUMERIC(10,6)\n        NOT NULL DEFAULT 0.060,\n\n    withdrawal_rate NUMERIC(10,6)\n        NOT NULL DEFAULT 0.040,\n\n    updated_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1024,
+        -80
+      ],
+      "id": "847f5ccd-95b2-4713-890b-2a09dfc94faf",
+      "name": "Create Financial Profiles Table",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE EXTENSION IF NOT EXISTS pgcrypto;\n\nCREATE TABLE IF NOT EXISTS financial_goals (\n    goal_id UUID PRIMARY KEY\n        DEFAULT gen_random_uuid(),\n\n    user_id TEXT NOT NULL\n        REFERENCES users(user_id)\n        ON DELETE CASCADE,\n\n    goal_type TEXT NOT NULL\n        DEFAULT 'retirement',\n\n    retirement_age INTEGER\n        CHECK (\n            retirement_age IS NULL\n            OR retirement_age BETWEEN 18 AND 120\n        ),\n\n    target_monthly_income_today NUMERIC(20,2)\n        NOT NULL\n        CHECK (target_monthly_income_today >= 0),\n\n    other_monthly_income_today NUMERIC(20,2)\n        NOT NULL DEFAULT 0\n        CHECK (other_monthly_income_today >= 0),\n\n    status TEXT NOT NULL\n        DEFAULT 'active'\n        CHECK (\n            status IN (\n                'active',\n                'completed',\n                'paused',\n                'cancelled'\n            )\n        ),\n\n    created_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW(),\n\n    updated_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1248,
+        -80
+      ],
+      "id": "b4eb50c0-44a9-4dfa-89e3-6649cfe1ef44",
+      "name": "Create Financial Goals Table",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS portfolio_holdings (\n    user_id TEXT NOT NULL\n        REFERENCES users(user_id)\n        ON DELETE CASCADE,\n\n    ticker TEXT NOT NULL,\n\n    quantity NUMERIC(20,6)\n        NOT NULL\n        CHECK (quantity > 0),\n\n    average_cost NUMERIC(20,6)\n        CHECK (\n            average_cost IS NULL\n            OR average_cost >= 0\n        ),\n\n    current_price NUMERIC(20,6)\n        CHECK (\n            current_price IS NULL\n            OR current_price >= 0\n        ),\n\n    sector TEXT,\n\n    updated_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW(),\n\n    PRIMARY KEY (\n        user_id,\n        ticker\n    )\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1472,
+        -80
+      ],
+      "id": "8f180575-e1ad-4d4a-9b06-c594300339a8",
+      "name": "Create Portfolio Holdings Table",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS source_documents (\n    document_id TEXT PRIMARY KEY,\n\n    ticker TEXT NOT NULL,\n    company_name TEXT,\n    cik TEXT NOT NULL,\n    form_type TEXT NOT NULL,\n\n    filing_date DATE,\n    report_date DATE,\n\n    accession_number TEXT NOT NULL UNIQUE,\n    source_url TEXT NOT NULL,\n\n    pinecone_namespace TEXT\n        NOT NULL DEFAULT 'sec-filings',\n\n    ingestion_status TEXT\n        NOT NULL DEFAULT 'pending'\n        CHECK (\n            ingestion_status IN (\n                'pending',\n                'processing',\n                'complete',\n                'failed',\n                'skipped'\n            )\n        ),\n\n    chunk_count INTEGER\n        NOT NULL DEFAULT 0\n        CHECK (chunk_count >= 0),\n\n    error_message TEXT,\n\n    created_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW(),\n\n    ingested_at TIMESTAMPTZ,\n\n    updated_at TIMESTAMPTZ\n        NOT NULL DEFAULT NOW()\n);\n\nCREATE INDEX IF NOT EXISTS idx_source_documents_lookup\n    ON source_documents (\n        ticker,\n        form_type,\n        filing_date DESC\n    );",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1696,
+        -80
+      ],
+      "id": "2f135077-ec50-4637-b4cb-b14f94272395",
+      "name": "Create Source Documents Table",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Pinecone Vector Store": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create Users Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Users Table": {
+      "main": [
+        [
+          {
+            "node": "Create Financial Profiles Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Financial Profiles Table": {
+      "main": [
+        [
+          {
+            "node": "Create Financial Goals Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Financial Goals Table": {
+      "main": [
+        [
+          {
+            "node": "Create Portfolio Holdings Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Portfolio Holdings Table": {
+      "main": [
+        [
+          {
+            "node": "Create Source Documents Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6312e609-3a17-4046-9db7-11d5a76cc92d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "qXTCDVUa1QH29MCd",
+  "tags": []
+}

@@ -1,0 +1,338 @@
+{
+  "name": "WealthPlan - RAG Evaluation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f071d7b1-35b6-4889-bae2-87501f109cc5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const testCases = [\n  {\n    test_id: 'RAG-001',\n\n    question:\n      'What supply-chain and manufacturing risks did Apple identify?',\n\n    expected_topics: [\n      'outsourced manufacturing',\n      'supplier concentration',\n      'component shortages',\n      'price increases'\n    ],\n\n    expected_ticker: 'AAPL',\n    expected_form_type: '10-K'\n  },\n\n  {\n    test_id: 'RAG-002',\n\n    question:\n      'What did Apple disclose about share repurchases and capital returns?',\n\n    expected_topics: [\n      'share repurchases',\n      'common stock',\n      'capital return',\n      'dividends'\n    ],\n\n    expected_ticker: 'AAPL',\n    expected_form_type: '10-K'\n  },\n\n  {\n    test_id: 'RAG-003',\n\n    question:\n      'How could public health events disrupt Apple operations?',\n\n    expected_topics: [\n      'travel restrictions',\n      'freight limitations',\n      'supply-chain disruption',\n      'production delays'\n    ],\n\n    expected_ticker: 'AAPL',\n    expected_form_type: '10-K'\n  },\n\n  {\n    test_id: 'RAG-004',\n\n    question:\n      'What cybersecurity and data privacy risks did Apple identify?',\n\n    expected_topics: [\n      'security breaches',\n      'data privacy',\n      'service disruption',\n      'reputational harm'\n    ],\n\n    expected_ticker: 'AAPL',\n    expected_form_type: '10-K'\n  },\n\n  {\n    test_id: 'RAG-005',\n\n    question:\n      'What competitive and product innovation risks did Apple disclose?',\n\n    expected_topics: [\n      'competition',\n      'technological change',\n      'new product introductions',\n      'pricing pressure'\n    ],\n\n    expected_ticker: 'AAPL',\n    expected_form_type: '10-K'\n  }\n];\n\nreturn testCases.map((testCase) => ({\n  json: testCase\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c14a36d1-d3fa-4f81-b53e-d77900f32da9",
+      "name": "Create Evaluation Dataset"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "b73a2360-af1e-4105-85ff-b4e9e2575755",
+      "name": "Loop Through Evaluation Questions"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "wealthplan-sec-filings",
+          "mode": "list",
+          "cachedResultName": "wealthplan-sec-filings"
+        },
+        "prompt": "={{ $json.question }}",
+        "topK": 10,
+        "options": {
+          "pineconeNamespace": "sec-filings"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "6c69761e-91db-43db-a2c2-4433e476f998",
+      "name": "Baseline Dense Retrieval",
+      "credentials": {
+        "pineconeApi": {
+          "id": "JyInC2HlbjeB9PIH",
+          "name": "WealthPlan-Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        160
+      ],
+      "id": "eae971c4-22f7-4a62-b413-509288286fdf",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "OljIO4Q19eBxavjN",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const retrievedItems = $input.all();\n\nif (retrievedItems.length === 0) {\n  throw new Error(\n    'Baseline retrieval returned no documents.'\n  );\n}\n\n// Retrieve the evaluation question that produced\n// the current set of Pinecone results.\nconst testCase =\n  $('Loop Through Evaluation Questions')\n    .itemMatching(0)\n    .json;\n\nconst baselineResults = retrievedItems.map(\n  (item, index) => {\n    const result = item.json;\n\n    const document =\n      result.document || result;\n\n    const metadata =\n      document.metadata ||\n      result.metadata ||\n      {};\n\n    const pageContent = String(\n      document.pageContent ||\n      result.pageContent ||\n      result.text ||\n      ''\n    ).trim();\n\n    return {\n      rank: index + 1,\n\n      similarity_score:\n        result.score ?? null,\n\n      page_content:\n        pageContent,\n\n      ticker:\n        metadata.ticker ?? null,\n\n      company_name:\n        metadata.company_name ?? null,\n\n      form_type:\n        metadata.form_type ?? null,\n\n      filing_date:\n        metadata.filing_date ?? null,\n\n      accession_number:\n        metadata.accession_number ?? null,\n\n      source_url:\n        metadata.source_url ?? null,\n\n      document_id:\n        metadata.document_id ?? null\n    };\n  }\n);\n\nreturn [\n  {\n    json: {\n      test_id:\n        testCase.test_id,\n\n      question:\n        testCase.question,\n\n      expected_topics:\n        testCase.expected_topics,\n\n      expected_ticker:\n        testCase.expected_ticker,\n\n      expected_form_type:\n        testCase.expected_form_type,\n\n      baseline_retrieved_count:\n        baselineResults.length,\n\n      baseline_results:\n        baselineResults\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -48
+      ],
+      "id": "95d83f4e-baf7-4069-8df6-40a8f813b043",
+      "name": "Capture Baseline Results"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "wealthplan-sec-filings",
+          "mode": "list",
+          "cachedResultName": "wealthplan-sec-filings"
+        },
+        "prompt": "={{ $json.question }}",
+        "topK": 10,
+        "useReranker": true,
+        "options": {
+          "pineconeNamespace": "sec-filings"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1488,
+        -32
+      ],
+      "id": "93f1a0b5-a252-422d-8a35-2c445ee66c7b",
+      "name": "Enhanced Dense Retrieval + Reranking",
+      "credentials": {
+        "pineconeApi": {
+          "id": "JyInC2HlbjeB9PIH",
+          "name": "WealthPlan-Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        192
+      ],
+      "id": "07975b85-b0d4-49ad-a7f9-f161070ad083",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "OljIO4Q19eBxavjN",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        176
+      ],
+      "id": "9563eb5b-9ba9-4c13-8a9e-176418c1ad84",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "pU5ysdsaULGOVF0D",
+          "name": "WealthPlan-Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const enhancedItems = $input.all();\n\nif (enhancedItems.length === 0) {\n  throw new Error(\n    'Enhanced retrieval returned no documents.'\n  );\n}\n\n// Follow the current loop iteration back to the\n// baseline evaluation record for this question.\nconst baselineRecord =\n  $('Capture Baseline Results')\n    .itemMatching(0)\n    .json;\n\nconst enhancedResults = enhancedItems.map(\n  (item, index) => {\n    const result =\n      item.json;\n\n    const document =\n      result.document ||\n      result;\n\n    const metadata =\n      document.metadata ||\n      result.metadata ||\n      {};\n\n    const pageContent =\n      String(\n        document.pageContent ||\n        result.pageContent ||\n        result.text ||\n        ''\n      ).trim();\n\n    return {\n      rank:\n        index + 1,\n\n      rerank_score:\n        result.score ?? null,\n\n      page_content:\n        pageContent,\n\n      ticker:\n        metadata.ticker ?? null,\n\n      company_name:\n        metadata.company_name ?? null,\n\n      form_type:\n        metadata.form_type ?? null,\n\n      filing_date:\n        metadata.filing_date ?? null,\n\n      accession_number:\n        metadata.accession_number ?? null,\n\n      source_url:\n        metadata.source_url ?? null,\n\n      document_id:\n        metadata.document_id ?? null\n    };\n  }\n);\n\nreturn [\n  {\n    json: {\n      ...baselineRecord,\n\n      enhanced_retrieved_count:\n        enhancedResults.length,\n\n      enhanced_results:\n        enhancedResults\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        -32
+      ],
+      "id": "e0ebbedd-08a6-4820-b81c-c89c2b5c76b5",
+      "name": "Capture Enhanced Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "const evaluationRecords =\n  $input.all().map(item => item.json);\n\nif (evaluationRecords.length === 0) {\n  throw new Error(\n    'No completed evaluation records were received.'\n  );\n}\n\n/*\n * This alias map makes the automatic evaluation more robust\n * than exact phrase matching alone.\n */\nconst topicAliases = {\n  'outsourced manufacturing': [\n    'outsourced manufacturing',\n    'contract manufacturers',\n    'manufacturing partners',\n    'third party manufacturing',\n    'outsourced production'\n  ],\n\n  'supplier concentration': [\n    'supplier concentration',\n    'limited number of suppliers',\n    'single source suppliers',\n    'concentrated suppliers',\n    'concentrate on the production'\n  ],\n\n  'component shortages': [\n    'component shortages',\n    'shortage of components',\n    'supply shortages',\n    'component availability',\n    'obtain sufficient quantities'\n  ],\n\n  'price increases': [\n    'price increases',\n    'increased prices',\n    'higher prices',\n    'commercially reasonable terms'\n  ],\n\n  'share repurchases': [\n    'share repurchases',\n    'repurchase shares',\n    'repurchased shares',\n    'repurchase program',\n    'stock repurchases'\n  ],\n\n  'common stock': [\n    'common stock',\n    'common shares'\n  ],\n\n  'capital return': [\n    'capital return',\n    'return capital',\n    'capital return program',\n    'return of capital'\n  ],\n\n  'dividends': [\n    'dividends',\n    'cash dividend',\n    'dividend payments'\n  ],\n\n  'travel restrictions': [\n    'travel restrictions',\n    'employee travel',\n    'restrictions on travel'\n  ],\n\n  'freight limitations': [\n    'freight limitations',\n    'limitations on freight',\n    'freight services',\n    'shipping limitations'\n  ],\n\n  'supply-chain disruption': [\n    'supply chain disruption',\n    'disrupt supply chains',\n    'supply chain interruptions',\n    'supply chain constraints'\n  ],\n\n  'production delays': [\n    'production delays',\n    'delays in production',\n    'production ramps',\n    'manufacturing delays'\n  ],\n\n  'security breaches': [\n    'security breaches',\n    'security breach',\n    'cybersecurity incident',\n    'unauthorized access',\n    'cyber attacks'\n  ],\n\n  'data privacy': [\n    'data privacy',\n    'privacy laws',\n    'personal information',\n    'privacy regulations'\n  ],\n\n  'service disruption': [\n    'service disruption',\n    'disruption of services',\n    'service interruptions',\n    'systems unavailable'\n  ],\n\n  'reputational harm': [\n    'reputational harm',\n    'harm to reputation',\n    'reputational damage',\n    'damage its reputation'\n  ],\n\n  'competition': [\n    'competition',\n    'competitive markets',\n    'competitors',\n    'competitive pressure'\n  ],\n\n  'technological change': [\n    'technological change',\n    'rapid technological',\n    'technology changes',\n    'changing technology'\n  ],\n\n  'new product introductions': [\n    'new product introductions',\n    'introduce new products',\n    'new products and services',\n    'product introductions'\n  ],\n\n  'pricing pressure': [\n    'pricing pressure',\n    'price competition',\n    'lower prices',\n    'competitive pricing'\n  ]\n};\n\n/*\n * Convert text into a normalized lowercase representation\n * without relying on regular expressions.\n */\nfunction normalizeText(value) {\n  const input =\n    String(value || '').toLowerCase();\n\n  let normalized = '';\n\n  for (const character of input) {\n    const code =\n      character.charCodeAt(0);\n\n    const isNumber =\n      code >= 48 &&\n      code <= 57;\n\n    const isLetter =\n      code >= 97 &&\n      code <= 122;\n\n    normalized +=\n      isNumber || isLetter\n        ? character\n        : ' ';\n  }\n\n  return normalized\n    .split(' ')\n    .filter(part => part !== '')\n    .join(' ');\n}\n\nfunction round(value, decimals = 2) {\n  const factor =\n    Math.pow(10, decimals);\n\n  return Math.round(\n    (value + Number.EPSILON) *\n    factor\n  ) / factor;\n}\n\nfunction average(values) {\n  if (values.length === 0) {\n    return 0;\n  }\n\n  return values.reduce(\n    (total, value) =>\n      total + value,\n    0\n  ) / values.length;\n}\n\nfunction findMatchedTopics(\n  pageContent,\n  expectedTopics\n) {\n  const normalizedPage =\n    normalizeText(pageContent);\n\n  return expectedTopics.filter(\n    expectedTopic => {\n      const aliases =\n        topicAliases[expectedTopic] ||\n        [expectedTopic];\n\n      return aliases.some(alias =>\n        normalizedPage.includes(\n          normalizeText(alias)\n        )\n      );\n    }\n  );\n}\n\nfunction evaluateTopFive(\n  results,\n  expectedTopics,\n  expectedTicker,\n  expectedFormType\n) {\n  const topFive =\n    (results || []).slice(0, 5);\n\n  const evaluatedResults =\n    topFive.map(\n      (result, index) => {\n        const matchedTopics =\n          findMatchedTopics(\n            result.page_content,\n            expectedTopics\n          );\n\n        const tickerCorrect =\n          !expectedTicker ||\n          result.ticker ===\n            expectedTicker;\n\n        const formTypeCorrect =\n          !expectedFormType ||\n          result.form_type ===\n            expectedFormType;\n\n        return {\n          rank:\n            index + 1,\n\n          score:\n            result.rerank_score ??\n            result.similarity_score ??\n            null,\n\n          relevant:\n            matchedTopics.length > 0,\n\n          matched_topics:\n            matchedTopics,\n\n          ticker_correct:\n            tickerCorrect,\n\n          form_type_correct:\n            formTypeCorrect,\n\n          metadata_correct:\n            tickerCorrect &&\n            formTypeCorrect,\n\n          document_id:\n            result.document_id ??\n            null,\n\n          filing_date:\n            result.filing_date ??\n            null,\n\n          source_url:\n            result.source_url ??\n            null,\n\n          passage_preview:\n            String(\n              result.page_content || ''\n            ).slice(0, 300)\n        };\n      }\n    );\n\n  const relevantResults =\n    evaluatedResults.filter(\n      result => result.relevant\n    );\n\n  const metadataCorrectResults =\n    evaluatedResults.filter(\n      result =>\n        result.metadata_correct\n    );\n\n  const matchedTopicSet =\n    new Set();\n\n  for (\n    const evaluatedResult of\n    evaluatedResults\n  ) {\n    for (\n      const topic of\n      evaluatedResult.matched_topics\n    ) {\n      matchedTopicSet.add(topic);\n    }\n  }\n\n  const firstRelevantIndex =\n    evaluatedResults.findIndex(\n      result => result.relevant\n    );\n\n  return {\n    top_k:\n      evaluatedResults.length,\n\n    relevant_chunk_count:\n      relevantResults.length,\n\n    top5_relevance_percent:\n      evaluatedResults.length === 0\n        ? 0\n        : round(\n            relevantResults.length *\n            100 /\n            evaluatedResults.length\n          ),\n\n    topics_matched:\n      Array.from(matchedTopicSet),\n\n    expected_topic_count:\n      expectedTopics.length,\n\n    matched_topic_count:\n      matchedTopicSet.size,\n\n    topic_coverage_percent:\n      expectedTopics.length === 0\n        ? 0\n        : round(\n            matchedTopicSet.size *\n            100 /\n            expectedTopics.length\n          ),\n\n    metadata_accuracy_percent:\n      evaluatedResults.length === 0\n        ? 0\n        : round(\n            metadataCorrectResults.length *\n            100 /\n            evaluatedResults.length\n          ),\n\n    reciprocal_rank:\n      firstRelevantIndex === -1\n        ? 0\n        : round(\n            1 /\n            (\n              firstRelevantIndex +\n              1\n            ),\n            4\n          ),\n\n    results:\n      evaluatedResults\n  };\n}\n\nconst testResults =\n  evaluationRecords.map(record => {\n    const expectedTopics =\n      record.expected_topics || [];\n\n    const baseline =\n      evaluateTopFive(\n        record.baseline_results,\n        expectedTopics,\n        record.expected_ticker,\n        record.expected_form_type\n      );\n\n    const enhanced =\n      evaluateTopFive(\n        record.enhanced_results,\n        expectedTopics,\n        record.expected_ticker,\n        record.expected_form_type\n      );\n\n    return {\n      test_id:\n        record.test_id,\n\n      question:\n        record.question,\n\n      expected_topics:\n        expectedTopics,\n\n      baseline,\n\n      enhanced,\n\n      improvement: {\n        relevance_percentage_points:\n          round(\n            enhanced\n              .top5_relevance_percent -\n            baseline\n              .top5_relevance_percent\n          ),\n\n        topic_coverage_percentage_points:\n          round(\n            enhanced\n              .topic_coverage_percent -\n            baseline\n              .topic_coverage_percent\n          ),\n\n        reciprocal_rank_change:\n          round(\n            enhanced.reciprocal_rank -\n            baseline.reciprocal_rank,\n            4\n          )\n      }\n    };\n  });\n\nconst baselineRelevance =\n  testResults.map(\n    result =>\n      result\n        .baseline\n        .top5_relevance_percent\n  );\n\nconst enhancedRelevance =\n  testResults.map(\n    result =>\n      result\n        .enhanced\n        .top5_relevance_percent\n  );\n\nconst baselineTopicCoverage =\n  testResults.map(\n    result =>\n      result\n        .baseline\n        .topic_coverage_percent\n  );\n\nconst enhancedTopicCoverage =\n  testResults.map(\n    result =>\n      result\n        .enhanced\n        .topic_coverage_percent\n  );\n\nconst baselineMetadataAccuracy =\n  testResults.map(\n    result =>\n      result\n        .baseline\n        .metadata_accuracy_percent\n  );\n\nconst enhancedMetadataAccuracy =\n  testResults.map(\n    result =>\n      result\n        .enhanced\n        .metadata_accuracy_percent\n  );\n\nconst baselineMrr =\n  testResults.map(\n    result =>\n      result\n        .baseline\n        .reciprocal_rank\n  );\n\nconst enhancedMrr =\n  testResults.map(\n    result =>\n      result\n        .enhanced\n        .reciprocal_rank\n  );\n\nconst summary = {\n  evaluation_name:\n    'WealthPlan SEC RAG retrieval evaluation',\n\n  evaluation_method:\n    'Automatic expected-topic and alias matching over the top five retrieved chunks. This is a transparent relevance proxy and should be manually reviewed before reporting final results.',\n\n  test_case_count:\n    testResults.length,\n\n  chunks_reviewed: {\n    baseline:\n      testResults.length * 5,\n\n    enhanced:\n      testResults.length * 5\n  },\n\n  baseline: {\n    average_top5_relevance_percent:\n      round(\n        average(\n          baselineRelevance\n        )\n      ),\n\n    average_topic_coverage_percent:\n      round(\n        average(\n          baselineTopicCoverage\n        )\n      ),\n\n    average_metadata_accuracy_percent:\n      round(\n        average(\n          baselineMetadataAccuracy\n        )\n      ),\n\n    mean_reciprocal_rank:\n      round(\n        average(\n          baselineMrr\n        ),\n        4\n      )\n  },\n\n  enhanced_with_reranking: {\n    average_top5_relevance_percent:\n      round(\n        average(\n          enhancedRelevance\n        )\n      ),\n\n    average_topic_coverage_percent:\n      round(\n        average(\n          enhancedTopicCoverage\n        )\n      ),\n\n    average_metadata_accuracy_percent:\n      round(\n        average(\n          enhancedMetadataAccuracy\n        )\n      ),\n\n    mean_reciprocal_rank:\n      round(\n        average(\n          enhancedMrr\n        ),\n        4\n      )\n  },\n\n  reranking_lift: {\n    relevance_percentage_points:\n      round(\n        average(\n          enhancedRelevance\n        ) -\n        average(\n          baselineRelevance\n        )\n      ),\n\n    topic_coverage_percentage_points:\n      round(\n        average(\n          enhancedTopicCoverage\n        ) -\n        average(\n          baselineTopicCoverage\n        )\n      ),\n\n    mrr_change:\n      round(\n        average(\n          enhancedMrr\n        ) -\n        average(\n          baselineMrr\n        ),\n        4\n      )\n  },\n\n  target: {\n    desired_top5_relevance_percent:\n      80,\n\n    achieved_by_enhanced_proxy:\n      average(\n        enhancedRelevance\n      ) >= 80\n  },\n\n  manual_review_required:\n    true\n};\n\nreturn [\n  {\n    json: {\n      summary,\n      test_results:\n        testResults\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -192
+      ],
+      "id": "78885fd6-7dff-4cbf-95d1-22eb3d873086",
+      "name": "Score Retrieval Evaluation"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create Evaluation Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Evaluation Dataset": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Evaluation Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Evaluation Questions": {
+      "main": [
+        [
+          {
+            "node": "Score Retrieval Evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baseline Dense Retrieval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Baseline Dense Retrieval",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baseline Dense Retrieval": {
+      "main": [
+        [
+          {
+            "node": "Capture Baseline Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Baseline Results": {
+      "main": [
+        [
+          {
+            "node": "Enhanced Dense Retrieval + Reranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Enhanced Dense Retrieval + Reranking",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Enhanced Dense Retrieval + Reranking",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enhanced Dense Retrieval + Reranking": {
+      "main": [
+        [
+          {
+            "node": "Capture Enhanced Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Enhanced Results": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Evaluation Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Retrieval Evaluation": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e850c57d-66b6-4eae-a112-8a69b12ea340",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "X61QicSEb0LviTKl",
+  "tags": []
+}

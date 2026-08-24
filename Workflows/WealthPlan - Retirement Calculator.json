@@ -1,0 +1,105 @@
+{
+  "name": "WealthPlan - Retirement Calculator",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "current_age",
+              "type": "number"
+            },
+            {
+              "name": "retirement_age",
+              "type": "number"
+            },
+            {
+              "name": "current_portfolio_value",
+              "type": "number"
+            },
+            {
+              "name": "monthly_contribution",
+              "type": "number"
+            },
+            {
+              "name": "desired_monthly_income_today",
+              "type": "number"
+            },
+            {
+              "name": "other_monthly_income_today",
+              "type": "number"
+            },
+            {
+              "name": "inflation_rate_percent",
+              "type": "number"
+            },
+            {
+              "name": "withdrawal_rate_percent",
+              "type": "number"
+            },
+            {
+              "name": "conservative_return_percent",
+              "type": "number"
+            },
+            {
+              "name": "base_return_percent",
+              "type": "number"
+            },
+            {
+              "name": "optimistic_return_percent",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f49a2a01-c35f-4402-8345-bcdd6585a9d8",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nfunction parseNumber(value, fieldName, fallback = null) {\n  if (\n    value === undefined ||\n    value === null ||\n    value === ''\n  ) {\n    if (fallback !== null) {\n      return fallback;\n    }\n\n    throw new Error(\n      fieldName + ' is required.'\n    );\n  }\n\n  const cleaned = String(value)\n    .split(',')\n    .join('')\n    .split('$')\n    .join('')\n    .split('%')\n    .join('')\n    .trim();\n\n  const parsed = Number(cleaned);\n\n  if (!Number.isFinite(parsed)) {\n    throw new Error(\n      fieldName + ' must be numeric.'\n    );\n  }\n\n  return parsed;\n}\n\nfunction parseRate(value, fieldName, fallback) {\n  const parsed = parseNumber(\n    value,\n    fieldName,\n    fallback\n  );\n\n  return Math.abs(parsed) > 1\n    ? parsed / 100\n    : parsed;\n}\n\nfunction roundMoney(value) {\n  return Math.round(\n    (value + Number.EPSILON) * 100\n  ) / 100;\n}\n\nconst currentAge = parseNumber(\n  input.current_age,\n  'current_age'\n);\n\nconst retirementAge = parseNumber(\n  input.retirement_age,\n  'retirement_age'\n);\n\nconst currentPortfolio = parseNumber(\n  input.current_portfolio_value,\n  'current_portfolio_value',\n  0\n);\n\nconst monthlyContribution = parseNumber(\n  input.monthly_contribution,\n  'monthly_contribution',\n  0\n);\n\nconst desiredMonthlyIncome = parseNumber(\n  input.desired_monthly_income_today,\n  'desired_monthly_income_today'\n);\n\nconst otherMonthlyIncome = parseNumber(\n  input.other_monthly_income_today,\n  'other_monthly_income_today',\n  0\n);\n\nconst inflationRate = parseRate(\n  input.inflation_rate_percent,\n  'inflation_rate_percent',\n  2.5\n);\n\nconst withdrawalRate = parseRate(\n  input.withdrawal_rate_percent,\n  'withdrawal_rate_percent',\n  4\n);\n\nconst conservativeReturn = parseRate(\n  input.conservative_return_percent,\n  'conservative_return_percent',\n  4\n);\n\nconst baseReturn = parseRate(\n  input.base_return_percent,\n  'base_return_percent',\n  6\n);\n\nconst optimisticReturn = parseRate(\n  input.optimistic_return_percent,\n  'optimistic_return_percent',\n  8\n);\n\nconst yearsToGoal =\n  retirementAge - currentAge;\n\nif (yearsToGoal <= 0) {\n  throw new Error(\n    'retirement_age must be greater than current_age.'\n  );\n}\n\nif (withdrawalRate <= 0) {\n  throw new Error(\n    'withdrawal_rate_percent must be greater than zero.'\n  );\n}\n\nconst monthsToGoal =\n  Math.round(yearsToGoal * 12);\n\nconst monthlyIncomeGapToday =\n  Math.max(\n    desiredMonthlyIncome -\n    otherMonthlyIncome,\n    0\n  );\n\nconst monthlyIncomeGapAtRetirement =\n  monthlyIncomeGapToday *\n  Math.pow(\n    1 + inflationRate,\n    yearsToGoal\n  );\n\nconst annualIncomeNeededAtRetirement =\n  monthlyIncomeGapAtRetirement * 12;\n\nconst targetCorpus =\n  annualIncomeNeededAtRetirement /\n  withdrawalRate;\n\nfunction calculateScenario(\n  scenarioName,\n  annualReturn\n) {\n  const monthlyReturn =\n    annualReturn / 12;\n\n  const growthFactor =\n    Math.pow(\n      1 + monthlyReturn,\n      monthsToGoal\n    );\n\n  const futureValueCurrentPortfolio =\n    currentPortfolio * growthFactor;\n\n  const futureValueContributions =\n    monthlyReturn === 0\n      ? monthlyContribution * monthsToGoal\n      : monthlyContribution *\n        (\n          (growthFactor - 1) /\n          monthlyReturn\n        );\n\n  const projectedCorpus =\n    futureValueCurrentPortfolio +\n    futureValueContributions;\n\n  const fundingGap =\n    targetCorpus - projectedCorpus;\n\n  let requiredMonthlyContribution = 0;\n\n  if (\n    targetCorpus >\n    futureValueCurrentPortfolio\n  ) {\n    requiredMonthlyContribution =\n      monthlyReturn === 0\n        ? (\n            targetCorpus -\n            futureValueCurrentPortfolio\n          ) / monthsToGoal\n        : (\n            targetCorpus -\n            futureValueCurrentPortfolio\n          ) *\n          monthlyReturn /\n          (growthFactor - 1);\n  }\n\n  return {\n    scenario: scenarioName,\n\n    annual_return_percent:\n      annualReturn * 100,\n\n    projected_corpus:\n      roundMoney(projectedCorpus),\n\n    funding_gap:\n      roundMoney(fundingGap),\n\n    required_monthly_contribution:\n      roundMoney(\n        Math.max(\n          requiredMonthlyContribution,\n          0\n        )\n      ),\n\n    funded_percentage:\n      roundMoney(\n        targetCorpus === 0\n          ? 100\n          : projectedCorpus /\n            targetCorpus *\n            100\n      ),\n\n    feasible:\n      projectedCorpus >= targetCorpus\n  };\n}\n\nconst scenarios = [\n  calculateScenario(\n    'conservative',\n    conservativeReturn\n  ),\n\n  calculateScenario(\n    'base',\n    baseReturn\n  ),\n\n  calculateScenario(\n    'optimistic',\n    optimisticReturn\n  )\n];\n\nconst baseScenario =\n  scenarios.find(\n    scenario =>\n      scenario.scenario === 'base'\n  );\n\nreturn [\n  {\n    json: {\n      answer_type:\n        'retirement_feasibility',\n\n      years_to_goal:\n        yearsToGoal,\n\n      desired_monthly_income_today:\n        roundMoney(\n          desiredMonthlyIncome\n        ),\n\n      monthly_income_needed_at_retirement:\n        roundMoney(\n          monthlyIncomeGapAtRetirement\n        ),\n\n      annual_income_needed_at_retirement:\n        roundMoney(\n          annualIncomeNeededAtRetirement\n        ),\n\n      target_retirement_corpus:\n        roundMoney(targetCorpus),\n\n      current_portfolio_value:\n        roundMoney(currentPortfolio),\n\n      current_monthly_contribution:\n        roundMoney(monthlyContribution),\n\n      base_projected_corpus:\n        baseScenario.projected_corpus,\n\n      base_funding_gap:\n        baseScenario.funding_gap,\n\n      base_required_monthly_contribution:\n        baseScenario\n          .required_monthly_contribution,\n\n      feasible_under_base_assumptions:\n        baseScenario.feasible,\n\n      scenarios,\n\n      assumptions: {\n        inflation_rate_percent:\n          inflationRate * 100,\n\n        withdrawal_rate_percent:\n          withdrawalRate * 100,\n\n        contribution_timing:\n          'end of each month',\n\n        taxes_included:\n          false,\n\n        social_security_included:\n          otherMonthlyIncome > 0\n      },\n\n      educational_notice:\n        'This is an educational projection based on the supplied assumptions, not a guaranteed financial outcome.'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a244802c-6cda-4b5b-a5c5-651529dd9d79",
+      "name": "Calculate Retirement Goal"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Calculate Retirement Goal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "024bb54d-810c-4758-a1c4-dc4c71ac959c",
+  "meta": {
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "AX6uxgdoZgnwnxOm",
+  "tags": []
+}

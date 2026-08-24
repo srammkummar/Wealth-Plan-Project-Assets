@@ -1,0 +1,986 @@
+[
+  {
+    "summary": {
+      "evaluation_name": "WealthPlan SEC RAG retrieval evaluation",
+      "evaluation_method": "Automatic expected-topic and alias matching over the top five retrieved chunks. This is a transparent relevance proxy and should be manually reviewed before reporting final results.",
+      "test_case_count": 5,
+      "chunks_reviewed": {
+        "baseline": 25,
+        "enhanced": 25
+      },
+      "baseline": {
+        "average_top5_relevance_percent": 36,
+        "average_topic_coverage_percent": 70,
+        "average_metadata_accuracy_percent": 100,
+        "mean_reciprocal_rank": 1
+      },
+      "enhanced_with_reranking": {
+        "average_top5_relevance_percent": 36,
+        "average_topic_coverage_percent": 70,
+        "average_metadata_accuracy_percent": 100,
+        "mean_reciprocal_rank": 1
+      },
+      "reranking_lift": {
+        "relevance_percentage_points": 0,
+        "topic_coverage_percentage_points": 0,
+        "mrr_change": 0
+      },
+      "target": {
+        "desired_top5_relevance_percent": 80,
+        "achieved_by_enhanced_proxy": false
+      },
+      "manual_review_required": true
+    },
+    "test_results": [
+      {
+        "test_id": "RAG-001",
+        "question": "What supply-chain and manufacturing risks did Apple identify?",
+        "expected_topics": [
+          "outsourced manufacturing",
+          "supplier concentration",
+          "component shortages",
+          "price increases"
+        ],
+        "baseline": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "supplier concentration",
+            "component shortages",
+            "price increases"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.61444217,
+              "relevant": true,
+              "matched_topics": [
+                "supplier concentration",
+                "component shortages",
+                "price increases"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "industry, or decide to concentrate on the production of common components\ninstead of components customized to meet the Company’s requirements, further\nlimiting the Company’s ability to obtain sufficient quantities of components on\ncommercially reasonable terms, or at all. Therefore, the Company rema"
+            },
+            {
+              "rank": 2,
+              "score": 0.583824575,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Substantially all of the Company’s hardware products are manufactured by\noutsourcing partners that are located primarily in China mainland, India, Japan,\nSouth Korea, Taiwan and Vietnam.\nApple Inc. | 2025 Form 10-K | 46"
+            },
+            {
+              "rank": 3,
+              "score": 0.580067694,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 4,
+              "score": 0.576499,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "uncertainties in a manner inconsistent with management’s expectations could have\na material impact on the Company’s financial condition and operating results.\nApple Inc. | 2025 Form 10-K | 26"
+            },
+            {
+              "rank": 5,
+              "score": 0.556594,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "highly skilled employees who are critical to its success, and could otherwise\nmaterially adversely affect the Company’s business, reputation, results of\noperations, financial condition and stock price.\nApple Inc. | 2025 Form 10-K | 10"
+            }
+          ]
+        },
+        "enhanced": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "supplier concentration",
+            "component shortages",
+            "price increases"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.51369345,
+              "relevant": true,
+              "matched_topics": [
+                "supplier concentration",
+                "component shortages",
+                "price increases"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "industry, or decide to concentrate on the production of common components\ninstead of components customized to meet the Company’s requirements, further\nlimiting the Company’s ability to obtain sufficient quantities of components on\ncommercially reasonable terms, or at all. Therefore, the Company rema"
+            },
+            {
+              "rank": 2,
+              "score": 0.3098798,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 3,
+              "score": 0.25522342,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "The Company’s products and services may be affected from time to time by design\nand manufacturing defects that could materially adversely affect the Company’s\nbusiness and result in harm to the Company’s reputation.\nThe Company offers complex hardware and software products and services that can\nbe a"
+            },
+            {
+              "rank": 4,
+              "score": 0.1609905,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Substantially all of the Company’s hardware products are manufactured by\noutsourcing partners that are located primarily in China mainland, India, Japan,\nSouth Korea, Taiwan and Vietnam.\nApple Inc. | 2025 Form 10-K | 46"
+            },
+            {
+              "rank": 5,
+              "score": 0.16027948,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "or obfuscate forensic evidence, all of which hinders the Company’s ability to\nidentify, investigate and recover from incidents. In addition, attacks against\nthe Company and its customers can escalate during periods of geopolitical\ntensions or conflict.\nAlthough malicious attacks perpetrated to gain "
+            }
+          ]
+        },
+        "improvement": {
+          "relevance_percentage_points": 0,
+          "topic_coverage_percentage_points": 0,
+          "reciprocal_rank_change": 0
+        }
+      },
+      {
+        "test_id": "RAG-002",
+        "question": "What did Apple disclose about share repurchases and capital returns?",
+        "expected_topics": [
+          "share repurchases",
+          "common stock",
+          "capital return",
+          "dividends"
+        ],
+        "baseline": {
+          "top_k": 5,
+          "relevant_chunk_count": 4,
+          "top5_relevance_percent": 80,
+          "topics_matched": [
+            "share repurchases",
+            "common stock",
+            "capital return",
+            "dividends"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 4,
+          "topic_coverage_percent": 100,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.623528183,
+              "relevant": true,
+              "matched_topics": [
+                "share repurchases",
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "As of September 27, 2025 and September 28, 2024, the fair value of the Company’s\nNotes, based on Level 2 inputs, was $80.4 billion and $88.4 billion,\nrespectively.\n\nNote 10 – Shareholders’ Equity\nShare Repurchase Program\nDuring 2025, the Company repurchased 402 million shares of its common stock for"
+            },
+            {
+              "rank": 2,
+              "score": 0.613775194,
+              "relevant": true,
+              "matched_topics": [
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "(1)On May 2, 2024, the Company announced a program to repurchase up to $110\nbillion of the Company’s common stock. During the fourth quarter of 2025, the\nCompany utilized the final $19.8 billion under the May 2024 program. On May 1,\n2025, the Company announced an additional program to repurchase up "
+            },
+            {
+              "rank": 3,
+              "score": 0.605300248,
+              "relevant": true,
+              "matched_topics": [
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Item 4. Mine Safety Disclosures\nNot applicable.\nApple Inc. | 2025 Form 10-K | 18\n\n--------------------------------------------------------------------------------\n\nPART II\n\nItem 5. Market for Registrant’s Common Equity, Related Stockholder Matters\nand Issuer Purchases of Equity Securities\nThe Compan"
+            },
+            {
+              "rank": 4,
+              "score": 0.602587104,
+              "relevant": true,
+              "matched_topics": [
+                "share repurchases",
+                "common stock",
+                "capital return",
+                "dividends"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "--------------------------------------------------------------------------------\n\nCapital Return Program\nIn addition to its contractual cash requirements, the Company has an authorized\nshare repurchase program. The program does not obligate the Company to acquire a\nminimum amount of shares. As of Se"
+            },
+            {
+              "rank": 5,
+              "score": 0.573192775,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Apple Inc. | 2025 Form 10-K | 54\n\n--------------------------------------------------------------------------------"
+            }
+          ]
+        },
+        "enhanced": {
+          "top_k": 5,
+          "relevant_chunk_count": 4,
+          "top5_relevance_percent": 80,
+          "topics_matched": [
+            "share repurchases",
+            "common stock",
+            "capital return",
+            "dividends"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 4,
+          "topic_coverage_percent": 100,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.6205532,
+              "relevant": true,
+              "matched_topics": [
+                "share repurchases",
+                "common stock",
+                "capital return",
+                "dividends"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "--------------------------------------------------------------------------------\n\nCapital Return Program\nIn addition to its contractual cash requirements, the Company has an authorized\nshare repurchase program. The program does not obligate the Company to acquire a\nminimum amount of shares. As of Se"
+            },
+            {
+              "rank": 2,
+              "score": 0.54695654,
+              "relevant": true,
+              "matched_topics": [
+                "share repurchases",
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "As of September 27, 2025 and September 28, 2024, the fair value of the Company’s\nNotes, based on Level 2 inputs, was $80.4 billion and $88.4 billion,\nrespectively.\n\nNote 10 – Shareholders’ Equity\nShare Repurchase Program\nDuring 2025, the Company repurchased 402 million shares of its common stock for"
+            },
+            {
+              "rank": 3,
+              "score": 0.53866833,
+              "relevant": true,
+              "matched_topics": [
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Item 4. Mine Safety Disclosures\nNot applicable.\nApple Inc. | 2025 Form 10-K | 18\n\n--------------------------------------------------------------------------------\n\nPART II\n\nItem 5. Market for Registrant’s Common Equity, Related Stockholder Matters\nand Issuer Purchases of Equity Securities\nThe Compan"
+            },
+            {
+              "rank": 4,
+              "score": 0.5376489,
+              "relevant": true,
+              "matched_topics": [
+                "common stock"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "(1)On May 2, 2024, the Company announced a program to repurchase up to $110\nbillion of the Company’s common stock. During the fourth quarter of 2025, the\nCompany utilized the final $19.8 billion under the May 2024 program. On May 1,\n2025, the Company announced an additional program to repurchase up "
+            },
+            {
+              "rank": 5,
+              "score": 0.39117387,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Available Information\nThe Company’s Annual Reports on Form 10-K, Quarterly Reports on Form 10-Q,\nCurrent Reports on Form 8-K, and amendments to reports filed pursuant to\nSections 13(a) and 15(d) of the Securities Exchange Act of 1934, as amended\n(“Exchange Act”), are filed with the U.S. Securities a"
+            }
+          ]
+        },
+        "improvement": {
+          "relevance_percentage_points": 0,
+          "topic_coverage_percentage_points": 0,
+          "reciprocal_rank_change": 0
+        }
+      },
+      {
+        "test_id": "RAG-003",
+        "question": "How could public health events disrupt Apple operations?",
+        "expected_topics": [
+          "travel restrictions",
+          "freight limitations",
+          "supply-chain disruption",
+          "production delays"
+        ],
+        "baseline": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "travel restrictions",
+            "freight limitations",
+            "production delays"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.673190892,
+              "relevant": true,
+              "matched_topics": [
+                "travel restrictions",
+                "freight limitations",
+                "production delays"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 2,
+              "score": 0.529798627,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "to do so, can result in adverse reactions by consumers and other stakeholders,\nincluding the commencement of legal and regulatory proceedings against the\nCompany, and can materially adversely affect the Company’s business, reputation,\nresults of operations, financial condition and stock price.\nApple"
+            },
+            {
+              "rank": 3,
+              "score": 0.50403285,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "or obfuscate forensic evidence, all of which hinders the Company’s ability to\nidentify, investigate and recover from incidents. In addition, attacks against\nthe Company and its customers can escalate during periods of geopolitical\ntensions or conflict.\nAlthough malicious attacks perpetrated to gain "
+            },
+            {
+              "rank": 4,
+              "score": 0.492900103,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "and other hostile acts, ransomware and other cybersecurity attacks, labor\ndisputes, public health issues and other events beyond the Company’s control.\nSuch events can make it difficult or impossible for the Company to manufacture\nand deliver products to its customers, create delays and inefficienci"
+            },
+            {
+              "rank": 5,
+              "score": 0.485442132,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "highly skilled employees who are critical to its success, and could otherwise\nmaterially adversely affect the Company’s business, reputation, results of\noperations, financial condition and stock price.\nApple Inc. | 2025 Form 10-K | 10"
+            }
+          ]
+        },
+        "enhanced": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "travel restrictions",
+            "freight limitations",
+            "production delays"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.8358192,
+              "relevant": true,
+              "matched_topics": [
+                "travel restrictions",
+                "freight limitations",
+                "production delays"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 2,
+              "score": 0.6077801,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "and other hostile acts, ransomware and other cybersecurity attacks, labor\ndisputes, public health issues and other events beyond the Company’s control.\nSuch events can make it difficult or impossible for the Company to manufacture\nand deliver products to its customers, create delays and inefficienci"
+            },
+            {
+              "rank": 3,
+              "score": 0.26989004,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "to do so, can result in adverse reactions by consumers and other stakeholders,\nincluding the commencement of legal and regulatory proceedings against the\nCompany, and can materially adversely affect the Company’s business, reputation,\nresults of operations, financial condition and stock price.\nApple"
+            },
+            {
+              "rank": 4,
+              "score": 0.23762943,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "uncertainties in a manner inconsistent with management’s expectations could have\na material impact on the Company’s financial condition and operating results.\nApple Inc. | 2025 Form 10-K | 26"
+            },
+            {
+              "rank": 5,
+              "score": 0.22093897,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "or obfuscate forensic evidence, all of which hinders the Company’s ability to\nidentify, investigate and recover from incidents. In addition, attacks against\nthe Company and its customers can escalate during periods of geopolitical\ntensions or conflict.\nAlthough malicious attacks perpetrated to gain "
+            }
+          ]
+        },
+        "improvement": {
+          "relevance_percentage_points": 0,
+          "topic_coverage_percentage_points": 0,
+          "reciprocal_rank_change": 0
+        }
+      },
+      {
+        "test_id": "RAG-004",
+        "question": "What cybersecurity and data privacy risks did Apple identify?",
+        "expected_topics": [
+          "security breaches",
+          "data privacy",
+          "service disruption",
+          "reputational harm"
+        ],
+        "baseline": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "data privacy"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 1,
+          "topic_coverage_percent": 25,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.5786466,
+              "relevant": true,
+              "matched_topics": [
+                "data privacy"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "or obfuscate forensic evidence, all of which hinders the Company’s ability to\nidentify, investigate and recover from incidents. In addition, attacks against\nthe Company and its customers can escalate during periods of geopolitical\ntensions or conflict.\nAlthough malicious attacks perpetrated to gain "
+            },
+            {
+              "rank": 2,
+              "score": 0.490551502,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "impacts, ongoing audit requirements and significant legal liability. The risks\nof inadvertent disclosure of personal data can increase with the introduction of\nnew and complex technologies, such as artificial intelligence features, further\nexacerbating such risks.\nIn addition to the risks generally "
+            },
+            {
+              "rank": 3,
+              "score": 0.489521742,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 4,
+              "score": 0.480409116,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "uncertainties in a manner inconsistent with management’s expectations could have\na material impact on the Company’s financial condition and operating results.\nApple Inc. | 2025 Form 10-K | 26"
+            },
+            {
+              "rank": 5,
+              "score": 0.47808677,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Apple Inc. | 2025 Form 10-K | 54\n\n--------------------------------------------------------------------------------"
+            }
+          ]
+        },
+        "enhanced": {
+          "top_k": 5,
+          "relevant_chunk_count": 1,
+          "top5_relevance_percent": 20,
+          "topics_matched": [
+            "data privacy"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 1,
+          "topic_coverage_percent": 25,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.43323857,
+              "relevant": true,
+              "matched_topics": [
+                "data privacy"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "or obfuscate forensic evidence, all of which hinders the Company’s ability to\nidentify, investigate and recover from incidents. In addition, attacks against\nthe Company and its customers can escalate during periods of geopolitical\ntensions or conflict.\nAlthough malicious attacks perpetrated to gain "
+            },
+            {
+              "rank": 2,
+              "score": 0.1349015,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "commercial terms for search distribution. If implemented, these remedies could\nmaterially adversely affect the Company’s ability to earn revenue from such\nlicensing arrangements.\nThe Company’s business, results of operations, financial condition and stock\nprice can be materially adversely affected, "
+            },
+            {
+              "rank": 3,
+              "score": 0.124521665,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "impacts, ongoing audit requirements and significant legal liability. The risks\nof inadvertent disclosure of personal data can increase with the introduction of\nnew and complex technologies, such as artificial intelligence features, further\nexacerbating such risks.\nIn addition to the risks generally "
+            },
+            {
+              "rank": 4,
+              "score": 0.08829236,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 5,
+              "score": 0.07887636,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "to do so, can result in adverse reactions by consumers and other stakeholders,\nincluding the commencement of legal and regulatory proceedings against the\nCompany, and can materially adversely affect the Company’s business, reputation,\nresults of operations, financial condition and stock price.\nApple"
+            }
+          ]
+        },
+        "improvement": {
+          "relevance_percentage_points": 0,
+          "topic_coverage_percentage_points": 0,
+          "reciprocal_rank_change": 0
+        }
+      },
+      {
+        "test_id": "RAG-005",
+        "question": "What competitive and product innovation risks did Apple disclose?",
+        "expected_topics": [
+          "competition",
+          "technological change",
+          "new product introductions",
+          "pricing pressure"
+        ],
+        "baseline": {
+          "top_k": 5,
+          "relevant_chunk_count": 2,
+          "top5_relevance_percent": 40,
+          "topics_matched": [
+            "competition",
+            "new product introductions",
+            "pricing pressure"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.599037468,
+              "relevant": true,
+              "matched_topics": [
+                "competition",
+                "new product introductions",
+                "pricing pressure"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Competition\nThe markets for the Company’s products and services are highly competitive and\nare characterized by aggressive price competition, downward pressure on gross\nmargins, continual improvement in product performance, and price sensitivity on\nthe part of consumers and businesses. The markets i"
+            },
+            {
+              "rank": 2,
+              "score": 0.578857124,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Apple Inc. | 2025 Form 10-K | 54\n\n--------------------------------------------------------------------------------"
+            },
+            {
+              "rank": 3,
+              "score": 0.576082468,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Apple Inc. | 2025 Form 10-K | 55\n\n--------------------------------------------------------------------------------"
+            },
+            {
+              "rank": 4,
+              "score": 0.575028598,
+              "relevant": true,
+              "matched_topics": [
+                "competition"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Some of the Company’s competitors have broad product lines, low-priced products,\nlarge installed bases of active devices, and large customer bases. Competition\nhas been particularly intense as competitors have aggressively cut prices and\nlowered product margins. Certain competitors have the resource"
+            },
+            {
+              "rank": 5,
+              "score": 0.574528515,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "uncertainties in a manner inconsistent with management’s expectations could have\na material impact on the Company’s financial condition and operating results.\nApple Inc. | 2025 Form 10-K | 26"
+            }
+          ]
+        },
+        "enhanced": {
+          "top_k": 5,
+          "relevant_chunk_count": 2,
+          "top5_relevance_percent": 40,
+          "topics_matched": [
+            "competition",
+            "new product introductions",
+            "pricing pressure"
+          ],
+          "expected_topic_count": 4,
+          "matched_topic_count": 3,
+          "topic_coverage_percent": 75,
+          "metadata_accuracy_percent": 100,
+          "reciprocal_rank": 1,
+          "results": [
+            {
+              "rank": 1,
+              "score": 0.43180037,
+              "relevant": true,
+              "matched_topics": [
+                "competition",
+                "new product introductions",
+                "pricing pressure"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Competition\nThe markets for the Company’s products and services are highly competitive and\nare characterized by aggressive price competition, downward pressure on gross\nmargins, continual improvement in product performance, and price sensitivity on\nthe part of consumers and businesses. The markets i"
+            },
+            {
+              "rank": 2,
+              "score": 0.31063214,
+              "relevant": true,
+              "matched_topics": [
+                "competition"
+              ],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "Some of the Company’s competitors have broad product lines, low-priced products,\nlarge installed bases of active devices, and large customer bases. Competition\nhas been particularly intense as competitors have aggressively cut prices and\nlowered product margins. Certain competitors have the resource"
+            },
+            {
+              "rank": 3,
+              "score": 0.12886485,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "uncertainties in a manner inconsistent with management’s expectations could have\na material impact on the Company’s financial condition and operating results.\nApple Inc. | 2025 Form 10-K | 26"
+            },
+            {
+              "rank": 4,
+              "score": 0.12561163,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "disruption to the Company’s business, and harm to the Company’s reputation.\nMajor public health issues, including pandemics such as the COVID-19 pandemic,\nhave adversely affected, and could in the future materially adversely affect,\nthe Company due to their impact on the global economy and demand fo"
+            },
+            {
+              "rank": 5,
+              "score": 0.10081683,
+              "relevant": false,
+              "matched_topics": [],
+              "ticker_correct": true,
+              "form_type_correct": true,
+              "metadata_correct": true,
+              "document_id": "AAPL_10-K_000032019325000079",
+              "filing_date": "2025-10-31",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+              "passage_preview": "to do so, can result in adverse reactions by consumers and other stakeholders,\nincluding the commencement of legal and regulatory proceedings against the\nCompany, and can materially adversely affect the Company’s business, reputation,\nresults of operations, financial condition and stock price.\nApple"
+            }
+          ]
+        },
+        "improvement": {
+          "relevance_percentage_points": 0,
+          "topic_coverage_percentage_points": 0,
+          "reciprocal_rank_change": 0
+        }
+      }
+    ]
+  }
+]

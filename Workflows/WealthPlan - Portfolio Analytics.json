@@ -1,0 +1,99 @@
+{
+  "name": "WealthPlan - Portfolio Analytics",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "user_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "953e6473-e80f-4a4c-b522-1f9fb2a3e86b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH holdings AS (\n    SELECT\n        ticker,\n        quantity,\n        COALESCE(average_cost, 0) AS average_cost,\n        COALESCE(current_price, 0) AS current_price,\n        COALESCE(sector, 'Unknown') AS sector,\n\n        quantity *\n        COALESCE(current_price, 0)\n            AS market_value,\n\n        quantity *\n        COALESCE(average_cost, 0)\n            AS cost_basis,\n\n        quantity *\n        (\n            COALESCE(current_price, 0) -\n            COALESCE(average_cost, 0)\n        ) AS unrealized_gain_loss\n\n    FROM portfolio_holdings\n    WHERE user_id = $1\n),\n\ntotals AS (\n    SELECT\n        COUNT(*)::INTEGER AS holding_count,\n\n        COALESCE(\n            SUM(market_value),\n            0\n        ) AS total_market_value,\n\n        COALESCE(\n            SUM(cost_basis),\n            0\n        ) AS total_cost_basis,\n\n        COALESCE(\n            SUM(unrealized_gain_loss),\n            0\n        ) AS unrealized_gain_loss\n\n    FROM holdings\n),\n\nsector_allocation AS (\n    SELECT\n        h.sector,\n\n        SUM(\n            h.market_value\n        ) AS sector_value,\n\n        CASE\n            WHEN t.total_market_value = 0\n                THEN 0\n            ELSE\n                SUM(h.market_value) *\n                100 /\n                t.total_market_value\n        END AS sector_percentage\n\n    FROM holdings h\n    CROSS JOIN totals t\n\n    GROUP BY\n        h.sector,\n        t.total_market_value\n),\n\npositions AS (\n    SELECT\n        h.*,\n\n        CASE\n            WHEN t.total_market_value = 0\n                THEN 0\n            ELSE\n                h.market_value *\n                100 /\n                t.total_market_value\n        END AS portfolio_percentage\n\n    FROM holdings h\n    CROSS JOIN totals t\n)\n\nSELECT\n    jsonb_build_object(\n        'user_id',\n        $1,\n\n        'data_as_of',\n        NOW(),\n\n        'data_status',\n        'Illustrative demo portfolio; prices are not live',\n\n        'summary',\n        jsonb_build_object(\n            'holding_count',\n            t.holding_count,\n\n            'total_market_value',\n            ROUND(\n                t.total_market_value,\n                2\n            ),\n\n            'total_cost_basis',\n            ROUND(\n                t.total_cost_basis,\n                2\n            ),\n\n            'unrealized_gain_loss',\n            ROUND(\n                t.unrealized_gain_loss,\n                2\n            ),\n\n            'return_percentage',\n            CASE\n                WHEN t.total_cost_basis = 0\n                    THEN 0\n                ELSE\n                    ROUND(\n                        t.unrealized_gain_loss *\n                        100 /\n                        t.total_cost_basis,\n                        2\n                    )\n            END\n        ),\n\n        'holdings',\n        COALESCE(\n            (\n                SELECT\n                    jsonb_agg(\n                        jsonb_build_object(\n                            'ticker',\n                            ticker,\n\n                            'quantity',\n                            quantity,\n\n                            'average_cost',\n                            ROUND(\n                                average_cost,\n                                2\n                            ),\n\n                            'current_price',\n                            ROUND(\n                                current_price,\n                                2\n                            ),\n\n                            'sector',\n                            sector,\n\n                            'market_value',\n                            ROUND(\n                                market_value,\n                                2\n                            ),\n\n                            'cost_basis',\n                            ROUND(\n                                cost_basis,\n                                2\n                            ),\n\n                            'unrealized_gain_loss',\n                            ROUND(\n                                unrealized_gain_loss,\n                                2\n                            )\n                        )\n                        ORDER BY\n                            market_value DESC\n                    )\n\n                FROM holdings\n            ),\n            '[]'::JSONB\n        ),\n\n        'sector_allocation',\n        COALESCE(\n            (\n                SELECT\n                    jsonb_agg(\n                        jsonb_build_object(\n                            'sector',\n                            sector,\n\n                            'sector_value',\n                            ROUND(\n                                sector_value,\n                                2\n                            ),\n\n                            'sector_percentage',\n                            ROUND(\n                                sector_percentage,\n                                2\n                            )\n                        )\n                        ORDER BY\n                            sector_value DESC\n                    )\n\n                FROM sector_allocation\n            ),\n            '[]'::JSONB\n        ),\n\n        'position_concentration',\n        COALESCE(\n            (\n                SELECT\n                    jsonb_agg(\n                        jsonb_build_object(\n                            'ticker',\n                            ticker,\n\n                            'sector',\n                            sector,\n\n                            'market_value',\n                            ROUND(\n                                market_value,\n                                2\n                            ),\n\n                            'portfolio_percentage',\n                            ROUND(\n                                portfolio_percentage,\n                                2\n                            )\n                        )\n                        ORDER BY\n                            market_value DESC\n                    )\n\n                FROM positions\n            ),\n            '[]'::JSONB\n        )\n    ) AS portfolio_analysis\n\nFROM totals t;",
+        "options": {
+          "queryReplacement": "={{ [$json.user_id] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "91e1c82f-9165-42e3-81ad-79aaf800d32e",
+      "name": "Calculate Portfolio Analytics",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result =\n  $input.first().json.portfolio_analysis;\n\nif (!result) {\n  throw new Error(\n    'Portfolio analysis was not returned.'\n  );\n}\n\nreturn [\n  {\n    json: result\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "c5867a0d-4b6e-4b5f-a5a9-5c04fb25f653",
+      "name": "Return Portfolio Analysis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Calculate Portfolio Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Portfolio Analytics": {
+      "main": [
+        [
+          {
+            "node": "Return Portfolio Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6b55b626-bff2-4fa2-a5ae-e57fbd85369c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "PFcOAJRur7BU5LEW",
+  "tags": []
+}

@@ -1,0 +1,65 @@
+{
+  "name": "WealthPlan - Seed Demo Portfolio",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "08584e34-f334-4618-ba60-5f41bfd0b0c2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO users (\n    user_id,\n    display_name\n)\nVALUES (\n    'demo-user-001',\n    'Demo Investor'\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n    display_name = EXCLUDED.display_name,\n    updated_at = NOW();\n\n\nINSERT INTO user_financial_profiles (\n    user_id,\n    current_age,\n    current_portfolio_value,\n    monthly_investment,\n    risk_tolerance,\n    preferred_sectors,\n    excluded_sectors,\n    inflation_rate,\n    pre_retirement_return,\n    withdrawal_rate,\n    updated_at\n)\nVALUES (\n    'demo-user-001',\n    45,\n    795500,\n    8000,\n    'moderate',\n    ARRAY[\n        'Technology',\n        'Healthcare'\n    ],\n    ARRAY[]::TEXT[],\n    0.025,\n    0.060,\n    0.040,\n    NOW()\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n    current_age = EXCLUDED.current_age,\n    current_portfolio_value =\n        EXCLUDED.current_portfolio_value,\n    monthly_investment =\n        EXCLUDED.monthly_investment,\n    risk_tolerance =\n        EXCLUDED.risk_tolerance,\n    preferred_sectors =\n        EXCLUDED.preferred_sectors,\n    excluded_sectors =\n        EXCLUDED.excluded_sectors,\n    inflation_rate =\n        EXCLUDED.inflation_rate,\n    pre_retirement_return =\n        EXCLUDED.pre_retirement_return,\n    withdrawal_rate =\n        EXCLUDED.withdrawal_rate,\n    updated_at = NOW();\n\n\nINSERT INTO portfolio_holdings (\n    user_id,\n    ticker,\n    quantity,\n    average_cost,\n    current_price,\n    sector,\n    updated_at\n)\nVALUES\n    (\n        'demo-user-001',\n        'AAPL',\n        1000,\n        180,\n        225,\n        'Technology',\n        NOW()\n    ),\n    (\n        'demo-user-001',\n        'MSFT',\n        500,\n        350,\n        420,\n        'Technology',\n        NOW()\n    ),\n    (\n        'demo-user-001',\n        'VTI',\n        1000,\n        240,\n        275,\n        'Broad Market ETF',\n        NOW()\n    ),\n    (\n        'demo-user-001',\n        'JNJ',\n        300,\n        150,\n        165,\n        'Healthcare',\n        NOW()\n    ),\n    (\n        'demo-user-001',\n        'BND',\n        500,\n        70,\n        72,\n        'Bond ETF',\n        NOW()\n    )\nON CONFLICT (\n    user_id,\n    ticker\n)\nDO UPDATE SET\n    quantity = EXCLUDED.quantity,\n    average_cost = EXCLUDED.average_cost,\n    current_price = EXCLUDED.current_price,\n    sector = EXCLUDED.sector,\n    updated_at = NOW();\n\n\nSELECT\n    user_id,\n    COUNT(*) AS holding_count,\n    ROUND(\n        SUM(\n            quantity * current_price\n        ),\n        2\n    ) AS total_market_value,\n    ROUND(\n        SUM(\n            quantity * average_cost\n        ),\n        2\n    ) AS total_cost_basis,\n    ROUND(\n        SUM(\n            quantity *\n            (\n                current_price -\n                average_cost\n            )\n        ),\n        2\n    ) AS unrealized_gain_loss\nFROM portfolio_holdings\nWHERE user_id = 'demo-user-001'\nGROUP BY user_id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "be85f297-d5cf-4904-89de-841e5537678f",
+      "name": "Load Demo Portfolio",
+      "credentials": {
+        "postgres": {
+          "id": "ly0GZvKq1yNJays8",
+          "name": "WealthPlan-Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Load Demo Portfolio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "09c09874-8004-44f2-8a34-a842bbb4b68f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f504436b80d1da93a7ec924270bf9d66b0d33def6d3f97e4f1b6b77b5a752d0"
+  },
+  "nodeGroups": [],
+  "id": "owZm0XH3lYApTBuU",
+  "tags": []
+}
